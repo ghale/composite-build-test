@@ -7,17 +7,24 @@ dependencies {
     compile 'my.group:child2:1.2'
 }
 
-def outputDir = file('build/extracted')
+// Use a file collection to keep track of the extracted headers and libs
+// These can be used as input to a compile or link task to take care of the dependency on the extract task
 def headerDirs = files()
 def sharedLibs = files()
 
+// Some working location to extract the files
+def extractDir = file('build/extracted')
+
 task extract {
+    // Use configurations.compile as an input to this task
+    // This will make sure that the files have all been built, but also skip the extraction when nothing upstream has changed
     inputs.files configurations.compile
-    outputs.dir outputDir
+    outputs.dir extractDir
     doLast {
+        // Extract the files of the compile configuration and keep track of the extracted headers and libraries
         configurations.compile.files.each { f ->
             println "extracting $f.name"
-            def unzipDir = new File(outputDir, f.name)
+            def unzipDir = new File(extractDir, f.name)
             copy { from zipTree(f); into unzipDir }
             headerDirs.from(new File(unzipDir, "headers"))
             sharedLibs.from(new File(unzipDir, "lib").listFiles())
@@ -25,10 +32,13 @@ task extract {
     }
 }
 
+// Attach task dependency information to the file collections
 headerDirs.builtBy extract
 sharedLibs.builtBy extract
 
 task compile {
+    // Compile task uses the headers file collection instead of using configurations.compile directly
+    // The task dependency on the extract task travels with this file collection
     inputs.files headerDirs
     doLast {
         headerDirs.each { f ->
@@ -38,6 +48,8 @@ task compile {
 }
 
 task link {
+    // Link task uses the libs file collection instead of using configurations.compile directly
+    // The task dependency on the extract task travels with this file collection
     inputs.files sharedLibs
     dependsOn compile
     doLast {
