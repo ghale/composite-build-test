@@ -18,6 +18,8 @@ task headers {
 task link {
     outputs.file sharedLibFile
     doLast {
+        // Do some "work"
+        Thread.sleep(2000)
         sharedLibFile << "some binary"
     }
 }

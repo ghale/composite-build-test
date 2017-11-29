@@ -36,23 +36,15 @@ task extract {
 headerDirs.builtBy extract
 sharedLibs.builtBy extract
 
-task compile {
-    // Compile task uses the headers file collection instead of using configurations.compile directly
-    // The task dependency on the extract task travels with this file collection
+task genCmake {
+    // The generation task uses the headers and libs file collections instead of using configurations.compile directly
+    // The task dependency on the extract task travels with these file collections
     inputs.files headerDirs
+    inputs.files sharedLibs
     doLast {
         headerDirs.each { f ->
             println "compiling using $f"
         }
-    }
-}
-
-task link {
-    // Link task uses the libs file collection instead of using configurations.compile directly
-    // The task dependency on the extract task travels with this file collection
-    inputs.files sharedLibs
-    dependsOn compile
-    doLast {
         sharedLibs.each { f ->
             println "linking using $f"
         }
