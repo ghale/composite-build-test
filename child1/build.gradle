@@ -1,0 +1,39 @@
+apply plugin: "base"
+
+group = "my.group"
+version = "1.2"
+
+def headersDir = file("build/headers")
+def sharedLibFile = file("build/${project.name}.so")
+def archiveFile = file("build/${project.name}.zip")
+
+// Generated headers
+task headers {
+    outputs.dir headersDir
+    doLast {
+        new File(headersDir, "${project.name}.h") << "#define SOMETHING 1"
+    }
+}
+
+task link {
+    outputs.file sharedLibFile
+    doLast {
+        sharedLibFile << "some binary"
+    }
+}
+
+task archive(type: Zip) {
+    from(headersDir) {
+        into "headers"
+    }
+    dependsOn(headers)
+    from(sharedLibFile) {
+        into "lib"
+    }
+    dependsOn(link)
+    archiveName = "${project.name}.zip"
+}
+
+artifacts {
+    "default" file: archive.archivePath, builtBy: archive
+}

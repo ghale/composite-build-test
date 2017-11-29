@@ -1,0 +1,48 @@
+configurations {
+    compile
+}
+
+dependencies {
+    compile 'my.group:child1:1.2'
+    compile 'my.group:child2:1.2'
+}
+
+def outputDir = file('build/extracted')
+def headerDirs = files()
+def sharedLibs = files()
+
+task extract {
+    inputs.files configurations.compile
+    outputs.dir outputDir
+    doLast {
+        configurations.compile.files.each { f ->
+            println "extracting $f.name"
+            def unzipDir = new File(outputDir, f.name)
+            copy { from zipTree(f); into unzipDir }
+            headerDirs.from(new File(unzipDir, "headers"))
+            sharedLibs.from(new File(unzipDir, "lib").listFiles())
+        }
+    }
+}
+
+headerDirs.builtBy extract
+sharedLibs.builtBy extract
+
+task compile {
+    inputs.files headerDirs
+    doLast {
+        headerDirs.each { f ->
+            println "compiling using $f"
+        }
+    }
+}
+
+task link {
+    inputs.files sharedLibs
+    dependsOn compile
+    doLast {
+        sharedLibs.each { f ->
+            println "linking using $f"
+        }
+    }
+}

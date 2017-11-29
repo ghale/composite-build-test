@@ -1,0 +1,2 @@
+includeBuild 'child1'
+includeBuild 'child2'
