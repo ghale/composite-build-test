@@ -38,4 +38,6 @@ task archive(type: Zip) {
 
 artifacts {
     "default" file: archive.archivePath, builtBy: archive
+    // Also does not work when dependency has a 'foo' classifier
+    //"default" file: archive.archivePath, builtBy: archive, classifier: 'foo'
 }
