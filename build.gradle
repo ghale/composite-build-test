@@ -4,7 +4,14 @@ configurations {
 
 dependencies {
     compile 'my.group:child1:1.2'
-    compile 'my.group:child2:1.2:foo'
+    compile('my.group:child2:1.2') {
+        artifact {
+            name = 'child2'
+            classifier = 'foo'
+            type = 'zip'
+            extension = 'zip'
+        }
+    }
 }
 
 // Use a file collection to keep track of the extracted headers and libs
