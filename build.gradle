@@ -3,11 +3,15 @@ configurations {
 }
 
 dependencies {
-    compile 'my.group:child1:1.2'
-    compile('my.group:child2:1.2') {
+    compile dep('child1', '1.2')
+    compile dep('child2', '1.2')
+}
+
+def dep(String module, String versionSelector) {
+    return project.dependencies.create("my.group:${module}:${versionSelector}") {
         artifact {
-            name = 'child2'
-            classifier = 'foo'
+            name = module
+            classifier = 'macos-x86_64'
             type = 'zip'
             extension = 'zip'
         }
@@ -56,4 +60,8 @@ task genCmake {
             println "linking using $f"
         }
     }
+}
+
+task build {
+    dependsOn genCmake
 }

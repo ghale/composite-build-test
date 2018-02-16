@@ -37,5 +37,5 @@ task archive(type: Zip) {
 }
 
 artifacts {
-    "default" file: archive.archivePath, builtBy: archive
+    "default" file: archive.archivePath, builtBy: archive, classifier: 'macos-x86_64'
 }
