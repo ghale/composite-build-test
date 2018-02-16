@@ -1,0 +1,72 @@
+plugins {
+    id 'lifecycle-base'
+}
+
+configurations {
+    compile
+}
+
+dependencies {
+    compile dep('producer1', '1.2')
+    compile dep('producer2', '1.2')
+}
+
+// Creates a Dependency instance configured to consume the zip output of the given project
+def dep(String module, String versionSelector) {
+    return project.dependencies.create("my.group:${module}:${versionSelector}") {
+        artifact {
+            name = module
+            classifier = 'macos-x86_64'
+            type = 'zip'
+            extension = 'zip'
+        }
+    }
+}
+
+// Use a file collection to keep track of the extracted headers and libs
+// These can be used as input to a compile or link task to take care of the dependency on the extract task
+def headerDirs = files()
+def sharedLibs = files()
+
+// Some working location to extract the files
+def extractDir = file('build/extracted')
+
+task extract {
+    // Use configurations.compile as an input to this task
+    // This will make sure that the files have all been built, but also skip the extraction when nothing upstream has changed
+    inputs.files configurations.compile
+    outputs.dir extractDir
+    doLast {
+        // Extract the files of the compile configuration and keep track of the extracted headers and libraries
+        configurations.compile.files.each { f ->
+            println "extracting $f.name"
+            def unzipDir = new File(extractDir, f.name)
+            copy { from zipTree(f); into unzipDir }
+            headerDirs.from(new File(unzipDir, "headers"))
+            sharedLibs.from(new File(unzipDir, "lib").listFiles())
+        }
+    }
+}
+
+// Attach task dependency information to the file collections
+headerDirs.builtBy extract
+sharedLibs.builtBy extract
+
+task genCmake {
+    // The generation task uses the headers and libs file collections instead of using configurations.compile directly
+    // The task dependency on the extract task travels with these file collections
+    inputs.files headerDirs
+    inputs.files sharedLibs
+    doLast {
+        headerDirs.each { f ->
+            println "compiling using $f"
+        }
+        sharedLibs.each { f ->
+            println "linking using $f"
+        }
+    }
+}
+
+assemble {
+    dependsOn genCmake
+}

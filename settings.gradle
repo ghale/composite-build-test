@@ -1,2 +1,3 @@
 includeBuild 'producer1'
 includeBuild 'producer2'
+includeBuild 'consumer'
