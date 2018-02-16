@@ -7,6 +7,7 @@ dependencies {
     compile dep('child2', '1.2')
 }
 
+// Creates a Dependency instance configured to consume the zip output of the given project
 def dep(String module, String versionSelector) {
     return project.dependencies.create("my.group:${module}:${versionSelector}") {
         artifact {
