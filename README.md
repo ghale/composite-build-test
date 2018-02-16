@@ -1,4 +1,4 @@
-A repository that demonstrates several separate builds that produce and consume outputs that are zipped into an archive, and how these can be used in a composite build.
+A repository that demonstrates several separate Gradle builds that produce and consume outputs that are zipped into an archive, and how these can be used in a composite Gradle build.
 
 There are 3 separate builds, in separate directories:
 
