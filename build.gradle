@@ -3,8 +3,8 @@ configurations {
 }
 
 dependencies {
-    compile dep('child1', '1.2')
-    compile dep('child2', '1.2')
+    compile dep('producer1', '1.2')
+    compile dep('producer2', '1.2')
 }
 
 // Creates a Dependency instance configured to consume the zip output of the given project

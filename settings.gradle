@@ -1,2 +1,2 @@
-includeBuild 'child1'
-includeBuild 'child2'
+includeBuild 'producer1'
+includeBuild 'producer2'

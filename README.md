@@ -1,0 +1,1 @@
+A repository that demonstrates several separate builds that produce and consume outputs that are zipped into an archive.
