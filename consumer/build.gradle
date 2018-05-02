@@ -1,9 +1,63 @@
+// This is only necessary to get the zip4j library
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'net.lingala.zip4j:zip4j:1.3.2'
+    }
+}
+
 plugins {
     id 'lifecycle-base'
 }
 
+def format = Attribute.of("format", String.class)
+def packaged = "packaged"
+def extracted = "extracted"
+def extractedHeaders = "extractedHeaders"
+def extractedLibs = "extractedLibs"
+
+dependencies {
+    attributesSchema {
+        attribute(format)
+    }
+    artifactTypes {
+        zip {
+            attributes.attribute(format, packaged)
+        }
+    }
+    registerTransform {
+        from.attribute(format, packaged)
+        to.attribute(format, extracted)
+        artifactTransform(ExtractTransform.class)
+    }
+    registerTransform {
+        from.attribute(format, extracted)
+        to.attribute(format, extractedHeaders)
+        artifactTransform(HeaderTransform.class)
+    }
+    registerTransform {
+        from.attribute(format, extracted)
+        to.attribute(format, extractedLibs)
+        artifactTransform(LibraryTransform.class)
+    }
+}
+
 configurations {
     compile
+    headers {
+        extendsFrom compile
+        attributes {
+            attribute(format, extractedHeaders)
+        }
+    }
+    libraries {
+        extendsFrom compile
+        attributes {
+            attribute(format, extractedLibs)
+        }
+    }
 }
 
 dependencies {
@@ -28,29 +82,9 @@ def dep(String module, String versionSelector) {
 def headerDirs = files()
 def sharedLibs = files()
 
-// Some working location to extract the files
-def extractDir = file('build/extracted')
-
-task extract {
-    // Use configurations.compile as an input to this task
-    // This will make sure that the files have all been built, but also skip the extraction when nothing upstream has changed
-    inputs.files configurations.compile
-    outputs.dir extractDir
-    doLast {
-        // Extract the files of the compile configuration and keep track of the extracted headers and libraries
-        configurations.compile.files.each { f ->
-            println "extracting $f.name"
-            def unzipDir = new File(extractDir, f.name)
-            copy { from zipTree(f); into unzipDir }
-            headerDirs.from(new File(unzipDir, "headers"))
-            sharedLibs.from(new File(unzipDir, "lib").listFiles())
-        }
-    }
-}
-
 // Attach task dependency information to the file collections
-headerDirs.builtBy extract
-sharedLibs.builtBy extract
+headerDirs.from(configurations.headers)
+sharedLibs.from(configurations.libraries)
 
 task genCmake {
     // The generation task uses the headers and libs file collections instead of using configurations.compile directly
@@ -69,4 +103,32 @@ task genCmake {
 
 assemble {
     dependsOn genCmake
+}
+
+import net.lingala.zip4j.core.ZipFile;
+
+class ExtractTransform extends ArtifactTransform {
+    @Override
+    List<File> transform(File file) {
+        println "extracting $file.name"
+        def unzipDir = new File(outputDirectory, file.name)
+        ZipFile zipFile = new ZipFile(file)
+        zipFile.extractAll(unzipDir.absolutePath)
+
+        return [unzipDir]
+    }
+}
+
+class HeaderTransform extends ArtifactTransform {
+    @Override
+    List<File> transform(File file) {
+        return [new File(file, "headers")]
+    }
+}
+
+class LibraryTransform extends ArtifactTransform {
+    @Override
+    List<File> transform(File file) {
+        return new File(file, "lib").listFiles() as List
+    }
 }
