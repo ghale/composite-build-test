@@ -12,6 +12,7 @@ plugins {
     id 'lifecycle-base'
 }
 
+// Define some attributes to represent the different ways a dependency can be accessed
 def usage = Usage.USAGE_ATTRIBUTE
 def packaged = project.objects.named(Usage.class, "packaged_zip")
 def extracted = project.objects.named(Usage.class, "extracted_zip")
@@ -22,21 +23,25 @@ dependencies {
     attributesSchema {
         attribute(usage)
     }
+    // All zip files are treated as "packaged" by default
     artifactTypes {
         zip {
             attributes.attribute(usage, packaged)
         }
     }
+    // A transform to extract packaged artifacts
     registerTransform {
         from.attribute(usage, packaged)
         to.attribute(usage, extracted)
         artifactTransform(ExtractTransform.class)
     }
+    // A transform to find the header dirs in an extracted package
     registerTransform {
         from.attribute(usage, extracted)
         to.attribute(usage, extractedHeaders)
         artifactTransform(HeaderTransform.class)
     }
+    // A transform to find the shared libraries in an extracted package
     registerTransform {
         from.attribute(usage, extracted)
         to.attribute(usage, extractedLibs)
@@ -46,12 +51,14 @@ dependencies {
 
 configurations {
     compile
+    // this configuration represents the extracted headers from the compile configuration
     headers {
         extendsFrom compile
         attributes {
             attribute(usage, extractedHeaders)
         }
     }
+    // this configuration represents the extracted libraries from the compile configuration
     libraries {
         extendsFrom compile
         attributes {
@@ -105,7 +112,8 @@ assemble {
     dependsOn genCmake
 }
 
-import net.lingala.zip4j.core.ZipFile;
+// We only use the zip4j library here for simplicity (we currently cannot use the Project object in a transform)
+import net.lingala.zip4j.core.ZipFile
 
 class ExtractTransform extends ArtifactTransform {
     @Override
