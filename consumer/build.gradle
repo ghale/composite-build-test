@@ -20,9 +20,6 @@ def extractedHeaders = project.objects.named(Usage.class, Usage.C_PLUS_PLUS_API)
 def extractedLibs = project.objects.named(Usage.class, Usage.NATIVE_RUNTIME)
 
 dependencies {
-    attributesSchema {
-        attribute(usage)
-    }
     // All zip files are treated as "packaged" by default
     artifactTypes {
         zip {
@@ -67,23 +64,6 @@ configurations {
     }
 }
 
-dependencies {
-    compile dep('producer1', '1.2')
-    compile dep('producer2', '1.2')
-}
-
-// Creates a Dependency instance configured to consume the zip output of the given project
-def dep(String module, String versionSelector) {
-    return project.dependencies.create("my.group:${module}:${versionSelector}") {
-        artifact {
-            name = module
-            classifier = 'macos-x86_64'
-            type = 'zip'
-            extension = 'zip'
-        }
-    }
-}
-
 // Use a file collection to keep track of the extracted headers and libs
 // These can be used as input to a compile or link task to take care of the dependency on the extract task
 def headerDirs = files()
@@ -110,6 +90,24 @@ task genCmake {
 
 assemble {
     dependsOn genCmake
+}
+
+// Declare our compile dependencies
+dependencies {
+    compile dep('producer1', '1.2')
+    compile dep('producer2', '1.2')
+}
+
+// Creates a Dependency instance configured to consume the zip output of the given project
+def dep(String module, String versionSelector) {
+    return project.dependencies.create("my.group:${module}:${versionSelector}") {
+        artifact {
+            name = module
+            classifier = 'macos-x86_64'
+            type = 'zip'
+            extension = 'zip'
+        }
+    }
 }
 
 // We only use the zip4j library here for simplicity (we currently cannot use the Project object in a transform)
