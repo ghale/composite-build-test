@@ -12,34 +12,34 @@ plugins {
     id 'lifecycle-base'
 }
 
-def format = Attribute.of("format", String.class)
-def packaged = "packaged"
-def extracted = "extracted"
-def extractedHeaders = "extractedHeaders"
-def extractedLibs = "extractedLibs"
+def usage = Usage.USAGE_ATTRIBUTE
+def packaged = project.objects.named(Usage.class, "packaged_zip")
+def extracted = project.objects.named(Usage.class, "extracted_zip")
+def extractedHeaders = project.objects.named(Usage.class, Usage.C_PLUS_PLUS_API)
+def extractedLibs = project.objects.named(Usage.class, Usage.NATIVE_RUNTIME)
 
 dependencies {
     attributesSchema {
-        attribute(format)
+        attribute(usage)
     }
     artifactTypes {
         zip {
-            attributes.attribute(format, packaged)
+            attributes.attribute(usage, packaged)
         }
     }
     registerTransform {
-        from.attribute(format, packaged)
-        to.attribute(format, extracted)
+        from.attribute(usage, packaged)
+        to.attribute(usage, extracted)
         artifactTransform(ExtractTransform.class)
     }
     registerTransform {
-        from.attribute(format, extracted)
-        to.attribute(format, extractedHeaders)
+        from.attribute(usage, extracted)
+        to.attribute(usage, extractedHeaders)
         artifactTransform(HeaderTransform.class)
     }
     registerTransform {
-        from.attribute(format, extracted)
-        to.attribute(format, extractedLibs)
+        from.attribute(usage, extracted)
+        to.attribute(usage, extractedLibs)
         artifactTransform(LibraryTransform.class)
     }
 }
@@ -49,13 +49,13 @@ configurations {
     headers {
         extendsFrom compile
         attributes {
-            attribute(format, extractedHeaders)
+            attribute(usage, extractedHeaders)
         }
     }
     libraries {
         extendsFrom compile
         attributes {
-            attribute(format, extractedLibs)
+            attribute(usage, extractedLibs)
         }
     }
 }
