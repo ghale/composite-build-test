@@ -11,6 +11,14 @@ task assemble {
     dependsOn gradle.includedBuild("consumer").task(":assemble")
 }
 
+task assemble32 {
+    dependsOn gradle.includedBuild("consumer").task(":assemble32")
+}
+
+task assemble64 {
+    dependsOn gradle.includedBuild("consumer").task(":assemble64")
+}
+
 task clean {
     dependsOn gradle.includedBuilds*.task(":clean")
 }

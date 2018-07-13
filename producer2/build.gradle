@@ -4,8 +4,8 @@ group = "my.group"
 version = "1.2"
 
 def headersDir = file("build/headers")
-def sharedLibFile = file("build/${project.name}.so")
-def archiveFile = file("build/${project.name}.zip")
+def sharedLibFile = { arch -> file("build/${project.name}_${arch}.so") }
+def architectures = [ "32", "64" ]
 
 // Generated headers
 task headers {
@@ -15,27 +15,30 @@ task headers {
     }
 }
 
-task link {
-    outputs.file sharedLibFile
-    doLast {
-        // Do some "work"
-        Thread.sleep(2000)
-        sharedLibFile << "some binary"
+architectures.each { arch ->
+    task "link${arch}" {
+        outputs.file sharedLibFile(arch)
+        doLast {
+            // Do some "work"
+            Thread.sleep(2000)
+            sharedLibFile(arch) << "some binary"
+        }
     }
-}
 
-task archive(type: Zip) {
-    from(headersDir) {
-        into "headers"
+    task "archive${arch}"(type: Zip) {
+        from(headersDir) {
+            into "headers"
+        }
+        dependsOn(headers)
+        from(sharedLibFile(arch)) {
+            into "lib"
+        }
+        dependsOn("link${arch}")
+        archiveName = "${project.name}_${arch}.zip"
     }
-    dependsOn(headers)
-    from(sharedLibFile) {
-        into "lib"
-    }
-    dependsOn(link)
-    archiveName = "${project.name}.zip"
 }
 
 artifacts {
-    "default" file: archive.archivePath, builtBy: archive, classifier: 'macos-x86_64'
+    "default" file: archive32.archivePath, builtBy: archive32, classifier: "macos-x86_32"
+    "default" file: archive64.archivePath, builtBy: archive64, classifier: 'macos-x86_64'
 }
